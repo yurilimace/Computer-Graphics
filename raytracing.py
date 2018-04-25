@@ -1,3 +1,5 @@
+
+
 import numpy as np
 from PIL import Image as PilImage
 import copy
@@ -69,7 +71,7 @@ def Calculate_U_and_V(Matrix,left,right,bottom,top,Nx,Ny):
             U = left +  (right - left) * (i + 0.5)/Nx
             V = bottom + (top - bottom) * ( j + 0.5)/Ny
             Matrix[i][j] = (U,V)
-    print(Matrix)
+
 
 #####Calculate ray in ortographic case ##############
 def Orto(Vector_e,Vector_u,Vector_v,Vector_w,Nx,Ny,Matrix):
@@ -82,10 +84,21 @@ def Orto(Vector_e,Vector_u,Vector_v,Vector_w,Nx,Ny,Matrix):
                Matrix[i][j] = (origin,direct)
 
 
+####Calculate light rays in ortographic case ###########
+def Orto_Lamp(lamp,Vector_lamp_u,Vector_lamp_v,Vector_lamp_w,Nx,Ny,Matrix,Matrix_lamp):
+   direct = np.dot(Vector_lamp_w,-1)
+   for i in range(0,Nx-1):
+           for j in range(0,Ny-1):
+               scalar_u = np.dot(Vector_lamp_u,Matrix[i][j][0])
+               scalar_v = np.dot(Vector_lamp_v,Matrix[i][j][1])
+               origin = Vector_e + scalar_u + scalar_v
+               Matrix_lamp[i][j] = (origin,direct)
+
+
 
 
 ###calculates whether the ray touches the sphere#########
-def Delta(Matrix, spheres, nx, ny, image, list_point):
+def Delta(Matrix, spheres, nx, ny, image,lamp,lamp_intense,Matrix_lamp):
      for i in range(0,nx-1):
                 for j in range(0,ny-1):
                     list_aux=[]
@@ -102,32 +115,52 @@ def Delta(Matrix, spheres, nx, ny, image, list_point):
                              t1 = abs(t1)
                              t2 = abs(t2)
                              menor = min(t1,t2)
-                             point = e_origin + (direct*menor)      ##### calculate p(t) and append in a list of points ######
-                             list_point.append(point - sphere[0])
+                             point = e_origin + (direct* menor)      ##### calculate p(t) and append in a list of points ######
+                             vector_n =  point -sphere[0] / Norma(point-sphere[0])
+                             vector_l = lamp - point / Norma(lamp - point)
+                             vector_h = Matrix_lamp[i,j][1] + vector_l  / Norma(Matrix_lamp[i,j][1] + vector_l)
                              list_aux.append([menor, sphere[2]])
                         else:
                             list_aux.append(["black","black"])
 
+
+
                     minor_2 = 50000000000000000;
                     color = [0,0,0]
+                    La = [0,0,0]
+                    Ba = [0,0,0]
                     for elem in list_aux:
                         if(elem[0]!="black"):
                             if(elem[0]<minor_2):
                                 minor_2 = elem[0]
                                 color = elem[1]
-                                print(color)
-                    image[i][j] = color
+                                #print(color)
+                                La = Lambert(vector_n,vector_l,color,lamp_intense)
+                                #print(La)
+                                Ba = Blinpong(La,vector_h,vector_n)
+
+                    image[i][j] = Ba
 
 
 
 
-####Calculate the vector l for the ilumination ################
-def Calculate_Vetor_L(lamp, spheres):
-    vector_l =[]
-    for sphere in spheres:
-        aux = lamp - sphere[0]
-        vector_l.append(aux)
-    return vector_l
+#function that calculates lambert shading
+def Lambert(Vector_n,Vector_l,color,l_intense):
+   Lred = int(color[0] * l_intense * max(0,np.dot(Vector_n,Vector_l)) + (environment_color[0] * environment_intense))
+   Lgreen = int(color[1] * l_intense * max(0,np.dot(Vector_n,Vector_l))+ (environment_color[1] * environment_intense))
+   Lblue  = int(color[2] * l_intense * max(0,np.dot(Vector_n,Vector_l))+ (environment_color[2] * environment_intense))
+   return [Lred,Lgreen,Lblue]
+
+
+#function that calculates Blinn Phong shading with environment lighting
+def Blinpong(La,vector_h,vector_n):
+    Bred = int(La[0] + (environment_color[0] * environment_intense) * max(0,np.dot(vector_n,vector_h))**pot)
+    Bgreen = int(La[1] + (environment_color[1] * environment_intense) * max(0, np.dot(vector_n, vector_h))**pot)
+    Bblue = int(La[2]  + (environment_color[2] * environment_intense) * max(0, np.dot(vector_n, vector_h))**pot)
+    return [Bred,Bgreen,Bblue]
+
+
+
 
 ###### mount and shows the image with drawn object ##########
 def Mount_image(Nx,Ny,Image):
@@ -152,13 +185,24 @@ Vector_e = [10,10,10]
 Vector_w=[0,0,0]
 Matrix = Building_Matrix(Nx,Ny)
 image = Building_Image(Nx,Ny)
-spheres = [[(0, 0, 0), 1, (100, 150, 100)], [(-1, 0, -2), 2, (250, 250, 250)]]
+spheres = [[(-4, 0, 0), 2, (90, 250, 250)], [(2,-5,2), 3, (100,250,100)]]
 
-###### ilumination variables #######
-lamp = [5,10,-10]
+###### lighting variables #######
+Matrix_lamp = Building_Matrix(Nx,Ny)
+lamp = [-10,20,30]
+lamp_intense = 0.02
 lamp = np.asarray(lamp)
-Vector_l = Calculate_Vetor_L(lamp, spheres)
-list_n=[]
+lamp_vector_w = [0,0,0]
+norma_lamp = Norma(lamp)
+Building_Vector_w(lamp_vector_w,lamp,norma_lamp)
+lamp_vector_t = Building_Vector_T(lamp_vector_w)
+lamp_vector_u = Building_Vector_U(lamp_vector_t,lamp_vector_w)
+lamp_vector_v = np.cross(lamp_vector_u,lamp_vector_w)
+
+###### environment variables #####
+environment_color = [0,0,255]
+environment_intense = 0.09
+pot = 0.15
 
 #building vectors
 norma_Vector_e = Norma(Vector_e)
@@ -171,10 +215,12 @@ Vector_v = np.cross(Vector_u,Vector_w)
 Calculate_U_and_V(Matrix,left,right,bottom,top,Nx,Ny)
 #calculate in ortographic case
 Orto(Vector_e,Vector_u,Vector_v,Vector_w,Nx,Ny,Matrix)
+Orto_Lamp(lamp,lamp_vector_u,lamp_vector_v,lamp_vector_w,Nx,Ny,Matrix,Matrix_lamp)
 #####transfor into a numpy Matrix ########
 Matrix = Transform_into_npMatrix(Matrix)
+Matrix_lamp = Transform_into_npMatrix(Matrix_lamp)
 
-Delta(Matrix, spheres, Nx, Ny, image, list_n)
+Delta(Matrix, spheres, Nx, Ny, image,lamp,lamp_intense,Matrix_lamp)
 
 #mout the image
 Mount_image(Nx,Ny,image)
