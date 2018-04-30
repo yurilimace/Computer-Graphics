@@ -1,4 +1,4 @@
-
+###### modificar os valores de d_U e d_V pois eles estão em zero
 
 import numpy as np
 from PIL import Image as PilImage
@@ -66,11 +66,28 @@ def Building_Vector_U(Vector_t,Vector_w):
 
 ###### Calculate the U and V vectors that build the ray ################
 def Calculate_U_and_V(Matrix,left,right,bottom,top,Nx,Ny):
+    d_U = (left +  (right - left) * (Nx + 0.5)/Nx)     ##### d_U,d_V values ​​of how much the pixel should move to the point (0,0) #######
+    d_V = (bottom + (top - bottom) * ( Ny + 0.5)/Ny)
+    #d_U = 0
+    #d_V = 0
     for i in range(0,Nx-1,1):
         for j in range(0,Ny-1,1):
-            U = left +  (right - left) * (i + 0.5)/Nx
-            V = bottom + (top - bottom) * ( j + 0.5)/Ny
+            U = (left +  (right - left) * (i + 0.5)/Nx) + d_U
+            V = (bottom + (top - bottom) * ( j + 0.5)/Ny) + d_V
             Matrix[i][j] = (U,V)
+    Transformation(T_matrix,Matrix,d_U,d_V)
+
+
+##### make the linear transformation of the matrix 2D ####################
+def Transformation(T_matrix,Matrix,d_U,d_V):
+    for i in range(0,Nx-1,1):
+        for j in range(0,Ny-1,1):
+            aux1 = (Matrix[i][j][0] * T_matrix[0][0]) + (Matrix[i][j][0] * T_matrix[0][1])
+            aux2 = (Matrix[i][j][1] * T_matrix[1][0]) + (Matrix[i][j][1] * T_matrix[1][1])
+            print(d_U)
+            print(d_V)
+            Matrix[i][j] = (aux1- d_U ,aux2 - d_V)
+
 
 
 #####Calculate ray in ortographic case ##############
@@ -185,7 +202,7 @@ Vector_e = [10,10,10]
 Vector_w=[0,0,0]
 Matrix = Building_Matrix(Nx,Ny)
 image = Building_Image(Nx,Ny)
-spheres = [[(-4, 0, 0), 2, (90, 250, 250)], [(2,-5,2), 3, (100,250,100)]]
+spheres = [[(-4, 0, 0), 2, (90, 250, 250)], [(2,-1,2), 3, (100,250,100)]]
 
 ###### lighting variables #######
 Matrix_lamp = Building_Matrix(Nx,Ny)
@@ -200,9 +217,14 @@ lamp_vector_u = Building_Vector_U(lamp_vector_t,lamp_vector_w)
 lamp_vector_v = np.cross(lamp_vector_u,lamp_vector_w)
 
 ###### environment variables #####
-environment_color = [0,0,255]
+environment_color = [255,0,0]
 environment_intense = 0.09
 pot = 0.15
+
+
+######Transformation Matrix variables ########
+T_matrix = [(0.5,0),(0,0.5)]
+
 
 #building vectors
 norma_Vector_e = Norma(Vector_e)
