@@ -1,8 +1,9 @@
-###### modificar os valores de d_U e d_V pois eles estão em zero
+
 
 import numpy as np
 from PIL import Image as PilImage
 import copy
+import math
 
 ##### function that mount the matrix w
 def Building_Matrix(Nx,Ny):
@@ -66,27 +67,27 @@ def Building_Vector_U(Vector_t,Vector_w):
 
 ###### Calculate the U and V vectors that build the ray ################
 def Calculate_U_and_V(Matrix,left,right,bottom,top,Nx,Ny):
-    d_U = (left +  (right - left) * (Nx + 0.5)/Nx)     ##### d_U,d_V values ​​of how much the pixel should move to the point (0,0) #######
-    d_V = (bottom + (top - bottom) * ( Ny + 0.5)/Ny)
-    #d_U = 0
-    #d_V = 0
+    #d_U = (left +  (right - left) * (Nx + 0.5)/Nx)     ##### d_U,d_V values ​​of how much the pixel should move to the point (0,0) #######
+    #d_V = (bottom + (top - bottom) * ( Ny + 0.5)/Ny)
+    d_U = 0
+    d_V = 0
     for i in range(0,Nx-1,1):
         for j in range(0,Ny-1,1):
             U = (left +  (right - left) * (i + 0.5)/Nx) + d_U
             V = (bottom + (top - bottom) * ( j + 0.5)/Ny) + d_V
             Matrix[i][j] = (U,V)
-    Transformation(T_matrix,Matrix,d_U,d_V)
+    Transformation(shear_matrix,Matrix,d_U,d_V) #####to do other transformation change the first parameter of the function Transformation ########
 
 
 ##### make the linear transformation of the matrix 2D ####################
 def Transformation(T_matrix,Matrix,d_U,d_V):
-    for i in range(0,Nx-1,1):
-        for j in range(0,Ny-1,1):
-            aux1 = (Matrix[i][j][0] * T_matrix[0][0]) + (Matrix[i][j][0] * T_matrix[0][1])
-            aux2 = (Matrix[i][j][1] * T_matrix[1][0]) + (Matrix[i][j][1] * T_matrix[1][1])
-            print(d_U)
-            print(d_V)
-            Matrix[i][j] = (aux1- d_U ,aux2 - d_V)
+    #### T Matrix is ​​the transformation matrix that can be of the shear, scale, reflection, rotation type ########
+    for i in range(0,Nx-1):
+        for j in range(0,Ny-1):
+            transformation_matrix = np.matmul(T_matrix,Matrix[i][j])
+            Matrix[i][j] = (transformation_matrix[0] - d_U , transformation_matrix[1] - d_V)
+
+
 
 
 
@@ -223,7 +224,14 @@ pot = 0.15
 
 
 ######Transformation Matrix variables ########
-T_matrix = [(0.5,0),(0,0.5)]
+scale_matrix = [(0.5,0),(0,0.5)]
+shear_matrix = [(1,0),(1,1)]
+reflect_matrix = [(1,0),(0,-1)]
+
+coss = math.cos(270)
+sen = math.sin(270)
+
+rotate_matrix = [(coss,sen),(-sen,coss)]
 
 
 #building vectors
