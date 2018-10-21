@@ -5,15 +5,57 @@ from PIL import Image as PilImage
 import copy
 import math
 
+####  global variables ##########
+Nx = 640
+Ny =480
+left = -13
+right = 13
+top = 10
+bottom = -10
+Vector_e = [10,10,10]
+Vector_w=[0,0,0]
+Matrix = Building_Matrix(Nx,Ny)
+image = Building_Image(Nx,Ny)
+spheres = [[(-4, 0, 0), 2, (90, 250, 250)], [(2,-1,2), 3, (100,250,100)]]
+
+###### lighting variables #######
+Matrix_lamp = Building_Matrix(Nx,Ny)
+lamp = [-10,20,30]
+lamp_intense = 0.02
+lamp = np.asarray(lamp)
+lamp_vector_w = [0,0,0]
+norma_lamp = Norma(lamp)
+Building_Vector_w(lamp_vector_w,lamp,norma_lamp)
+lamp_vector_t = Building_Vector_T(lamp_vector_w)
+lamp_vector_u = Building_Vector_U(lamp_vector_t,lamp_vector_w)
+lamp_vector_v = np.cross(lamp_vector_u,lamp_vector_w)
+
+###### environment variables #####
+environment_color = [255,0,0]
+environment_intense = 0.09
+pot = 0.15
+
+
+######Transformation Matrix variables ########
+scale_matrix = [(0.5,0),(0,0.5)]
+shear_matrix = [(1,0),(1,1)]
+reflect_matrix = [(1,0),(0,-1)]
+
+coss = math.cos(270)
+sen = math.sin(270)
+
+rotate_matrix = [(coss,sen),(-sen,coss)]
+
+
 ##### function that mount the matrix w
 def Building_Matrix(Nx,Ny):
     Line = []
     Colunm = []
-    for i in range(0,Nx,1): #colunas
-      for j in range(0,Ny,1): #linhas
-        Line.append(0);
-      Colunm.append(Line)
-      Line =[]
+    for _ in range(0,Nx,1): #colunas
+      for _ in range(0,Ny,1): #linhas
+          Line.append(0)
+    Colunm.append(Line)
+    Line =[]
     return Colunm
 
 
@@ -27,8 +69,8 @@ def Transform_into_npMatrix(Matrix):
 def Building_Image(Nx,Ny):
     Line = []
     Colunm = []
-    for i in range(0,Nx,1): #colunas
-      for j in range(0,Ny,1): #linhas
+    for _ in range(0,Nx,1): #colunas
+      for _ in range(0,Ny,1): #linhas
         Line.append([0,0,0]);
       Colunm.append(Line)
       Line =[]
@@ -188,50 +230,6 @@ def Mount_image(Nx,Ny,Image):
         for j in range(0,Ny):
            px[i,j] = (image[i][j][0],image[i][j][1],image[i][j][2])
     img.show()
-
-
-
-
-####  global variables ##########
-Nx = 640
-Ny =480
-left = -13
-right = 13
-top = 10
-bottom = -10
-Vector_e = [10,10,10]
-Vector_w=[0,0,0]
-Matrix = Building_Matrix(Nx,Ny)
-image = Building_Image(Nx,Ny)
-spheres = [[(-4, 0, 0), 2, (90, 250, 250)], [(2,-1,2), 3, (100,250,100)]]
-
-###### lighting variables #######
-Matrix_lamp = Building_Matrix(Nx,Ny)
-lamp = [-10,20,30]
-lamp_intense = 0.02
-lamp = np.asarray(lamp)
-lamp_vector_w = [0,0,0]
-norma_lamp = Norma(lamp)
-Building_Vector_w(lamp_vector_w,lamp,norma_lamp)
-lamp_vector_t = Building_Vector_T(lamp_vector_w)
-lamp_vector_u = Building_Vector_U(lamp_vector_t,lamp_vector_w)
-lamp_vector_v = np.cross(lamp_vector_u,lamp_vector_w)
-
-###### environment variables #####
-environment_color = [255,0,0]
-environment_intense = 0.09
-pot = 0.15
-
-
-######Transformation Matrix variables ########
-scale_matrix = [(0.5,0),(0,0.5)]
-shear_matrix = [(1,0),(1,1)]
-reflect_matrix = [(1,0),(0,-1)]
-
-coss = math.cos(270)
-sen = math.sin(270)
-
-rotate_matrix = [(coss,sen),(-sen,coss)]
 
 
 #building vectors
